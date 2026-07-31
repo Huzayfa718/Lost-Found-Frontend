@@ -11,15 +11,41 @@ import Register from "../Register/Register";
 import PrivateRoute from "../Components/PrivateRoute/PrivateRoute";
 import AddItem from "../Components/AddItem";
 import RecoveredItems from "../Components/RecoveredItems";
-import LostFoundItems from "../Components/lostfounditems";
+import Lostitems from "../Components/LostItems";
+import Founditems from "../Components/Founditems";
+import ProjectDocumentation from "../Components/ProjectDocumentation";
+
+
+
+
+const API_BASE_URL = "http://localhost:5000" ;
+
+async function fetchJson(path, options = {}) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      credentials: "include",
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.items)) return data.items;
+    if (data && typeof data === "object" && data.item) return data.item;
+    if (data && typeof data === "object" && (data._id || data.title || data.description)) return data;
+    return [];
+  } catch (error) {
+    console.error("API request failed:", error);
+    return [];
+  }
+}
 
 // Loader for home page data
 async function dataLoader() {
-  const response = await fetch("https://lostfoundserver-five.vercel.app/items", {
-    credentials: 'include',  // include cookies for auth
-  });
-  if (!response.ok) throw new Error("Failed to fetch items");
-  return response.json();
+  return fetchJson("/");
 }
 
 const router = createBrowserRouter([
@@ -53,11 +79,7 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
         loader: async ({ params }) => {
-          const res = await fetch(`https://lostfoundserver-five.vercel.app/items/${params.id}`, {
-            credentials: 'include',
-          });
-          if (!res.ok) throw new Error("Failed to fetch task details");
-          return res.json();
+          return fetchJson(`/${params.id}`);
         },
       },
 
@@ -72,8 +94,12 @@ const router = createBrowserRouter([
       },
 
       {
-        path: "/allItems",
-        element: <LostFoundItems />,
+        path: "/lostitems",
+        element: <Lostitems/>,
+      },
+      {
+        path: "/founditems",
+        element: <Founditems />,
       },
 
       // My Posted Items (Private Route)
@@ -91,6 +117,10 @@ const router = createBrowserRouter([
         path: "/allRecovered",
         element: <RecoveredItems />,
       },
+      {
+        path: "/documentation",
+        element: <ProjectDocumentation />,
+      },
 
       // Update Task by ID (Private Route)
       {
@@ -101,11 +131,7 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
         loader: async ({ params }) => {
-          const res = await fetch(`https://lostfoundserver-five.vercel.app/items/${params.id}`, {
-            credentials: 'include',
-          });
-          if (!res.ok) throw new Error("Failed to fetch task for update");
-          return res.json();
+          return fetchJson(`/${params.id}`);
         },
       },
     ],

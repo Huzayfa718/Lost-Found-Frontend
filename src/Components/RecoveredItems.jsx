@@ -6,9 +6,12 @@ function RecoveredItems() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    fetch("https://lostfoundserver-five.vercel.app/items/status/recovered")
+    fetch("http://localhost:5000/status/recovered")
       .then(res => res.json())
-      .then(data => setItems(data))
+      .then(data => {
+        const list = Array.isArray(data) ? data : data?.items || [];
+        setItems(list);
+      })
       .catch(err => console.error("Failed to fetch recovered items:", err));
   }, []);
 
@@ -20,12 +23,14 @@ function RecoveredItems() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map(item => (
-            <div key={item._id} className="card bg-white shadow-lg p-5 rounded-lg">
-              <h3 className="text-xl font-semibold">{item.title}</h3>
-              <p><strong>Category:</strong> {item.category}</p>
-              <p><strong>Date Lost:</strong> {item.dateLost ? new Date(item.dateLost).toLocaleDateString() : "N/A"}</p>
-              <p><strong>Status:</strong> {item.status}</p>
-              <Link to={`/taskdetails/${item._id}`} className="btn btn-primary w-full mt-4">
+            <div key={item._id} className="card bg-slate-900 text-white shadow-xl border border-slate-700 p-6 rounded-xl">
+              <h3 className="text-xl font-semibold text-white">{item.title}</h3>
+              <div className="mt-3 space-y-2 text-sm text-slate-200">
+                <p><strong className="text-white">Category:</strong> {item.category}</p>
+                <p><strong className="text-white">Date Lost:</strong> {item.dateLost ? new Date(item.dateLost).toLocaleDateString() : "N/A"}</p>
+                <p><strong className="text-white">Status:</strong> {item.status}</p>
+              </div>
+              <Link to={`/taskdetails/${item._id}`} className="btn btn-primary w-full mt-5">
                 View Details
               </Link>
             </div>

@@ -10,10 +10,11 @@ function MyPostedTasks() {
   useEffect(() => {
     if (!user) return;
 
-    fetch('https://lostfoundserver-five.vercel.app/items')
+    fetch('http://localhost:5000')
       .then(res => res.json())
       .then(data => {
-        const filtered = data.filter(
+        const list = Array.isArray(data) ? data : data?.items || [];
+        const filtered = list.filter(
           task => task.email === user.email || task.name === user.displayName
         );
         setTasks(filtered);
@@ -32,7 +33,7 @@ function MyPostedTasks() {
     confirmButtonText: 'Yes, delete it!'
   }).then((result) => {
     if (result.isConfirmed) {
-      fetch(`https://lostfoundserver-five.vercel.app/items/${id}`, {
+      fetch(`http://localhost:5000/${id}`, {
         method: 'DELETE',
         credentials: 'include', // ✅ Include the token cookie
       })

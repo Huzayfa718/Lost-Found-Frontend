@@ -1,34 +1,67 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 import Swal from "sweetalert2";
+import { AuthContext } from "./Contexts/AuthContext";
+import ChatBox from "./ChatBox";
 
 function Taskdetails() {
   const task = useLoaderData();
+  const { user } = useContext(AuthContext);
   const [status, setStatus] = useState(task.status || "lost");
 
-const markRecovered = () => {
-  fetch(`https://lostfoundserver-five.vercel.app/items/${task._id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include", // ✅ Include the HttpOnly cookie
-    body: JSON.stringify({ status: "recovered" }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.modifiedCount > 0) {
-        setStatus("recovered");
-        Swal.fire("Success", "Item marked as recovered!", "success");
-      } else {
-        Swal.fire("Info", "No changes made.", "info");
-      }
-    })
-    .catch(() => {
-      Swal.fire("Error", "Update failed.", "error");
+const markRecovered = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/${task._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ status: "recovered" }),
     });
+
+    let data = null;
+    const contentType = res.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else if (res.status !== 204) {
+      await res.text();
+    }
+
+    const isSuccess =
+      res.ok &&
+      (data?.modifiedCount > 0 ||
+        data?.success === true ||
+        data?.updatedItem ||
+        data?.status === "recovered" ||
+        res.status === 200 ||
+        res.status === 204);
+
+    if (isSuccess) {
+      setStatus("recovered");
+      Swal.fire("Success", "Item marked as recovered!", "success");
+    } else {
+      throw new Error("No changes made.");
+    }
+  } catch (error) {
+    console.error("Recovery update failed:", error);
+    Swal.fire("Error", "Update failed. Please try again.", "error");
+  }
 };
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-base-200 rounded-lg shadow-lg mt-10">
+      {task.thumbnail ? (
+        <img
+          src={task.thumbnail}
+          alt={task.title}
+          className="h-64 w-full object-cover rounded-lg mb-6"
+        />
+      ) : (
+        <div className="h-64 w-full bg-slate-300 flex items-center justify-center rounded-lg mb-6 text-slate-600">
+          No image available
+        </div>
+      )}
+
       <h2 className="text-3xl font-bold mb-4">{task.title}</h2>
       <p><strong>Category:</strong> {task.category}</p>
       <p><strong>Type:</strong> {task.postType}</p>
@@ -50,6 +83,8 @@ const markRecovered = () => {
           Mark as Recovered
         </button>
       )}
+
+      {user && <ChatBox task={task} currentUser={user} />}
     </div>
   );
 }

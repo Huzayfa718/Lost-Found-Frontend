@@ -6,11 +6,13 @@ import Navbar from '../Navbar'
 export class Root extends PureComponent {
   render() {
     return (
-            <>
-         <Navbar />
-        <Outlet />
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1">
+          <Outlet />
+        </main>
         <Footer />
-      </>
+      </div>
     )
   }
 }

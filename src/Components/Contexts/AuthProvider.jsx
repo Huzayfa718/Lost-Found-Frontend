@@ -8,6 +8,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
 } from 'firebase/auth';
 import { auth } from '../../../Firebase.init';
 
@@ -48,19 +49,31 @@ const signOutUser = async () => {
   }
 };
 
+  const updateUserProfile = async (profileData) => {
+    if (!auth.currentUser) {
+      throw new Error('No authenticated user found');
+    }
+
+    await updateProfile(auth.currentUser, profileData);
+    await auth.currentUser.reload();
+    setUser({ ...auth.currentUser });
+  };
+
   useEffect(() => {
-    console.log(user);
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-            (async () => {
-        const token = await currentUser.getIdToken();
-        console.log("User token:", token);
-        setUser(currentUser);
-        setLoading(false);
-      })();
+        try {
+          await currentUser.getIdToken();
+          setUser(currentUser);
+        } catch (error) {
+          console.error('Failed to refresh auth token:', error);
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
+
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -73,6 +86,7 @@ const signOutUser = async () => {
     signOutUser,
     loading,
     signInWithGoogle,
+    updateUserProfile,
   };
 
   return (
